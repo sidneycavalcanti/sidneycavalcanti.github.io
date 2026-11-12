@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status dos serviços</title>
+<meta name="description" content="Status em tempo real dos serviços de que as empresas dependem: Microsoft 365, Google, AWS, pagamentos e mais.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#e4e7ea">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15191d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2323292f'/%3E%3Crect x='12' y='16' width='40' height='9' rx='2' fill='%23e4e7ea'/%3E%3Crect x='12' y='30' width='40' height='9' rx='2' fill='%23e4e7ea'/%3E%3Ccircle cx='46' cy='48' r='5' fill='%2334c759'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap">
+<style>
+:root {
+  --bg: #e4e7ea;        /* aluminio do rack, o mesmo do portfolio */
+  --ink: #23292f;
+  --muted: #5b646d;
+  --unit: #f3f5f6;
+  --rail: #c3c9cf;
+  --screw: #9aa2aa;
+  --tape: #fbf8e8;      /* fita de etiquetadora */
+  --ok: #2fa84f;
+  --minor: #d99a00;
+  --major: #e0662a;
+  --critical: #d93a3a;
+  --maint: #3a7bd5;
+  --off: #8a9299;
+  --focus: #3a7bd5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15191d; --ink: #e4e7ea; --muted: #9aa3ab; --unit: #1e2328;
+    --rail: #2c333a; --screw: #48515a; --tape: #2a2e22;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.5 "Schibsted Grotesk", system-ui, sans-serif;
+}
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.wrap { max-width: 60rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+
+.top { margin-bottom: 2.5rem; }
+.back { font-size: .95rem; color: var(--muted); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 {
+  font-size: clamp(2.1rem, 6vw, 3.6rem); font-weight: 800; line-height: 1.05;
+  letter-spacing: -.025em; margin: .6rem 0 .9rem; max-width: 18ch; text-wrap: balance;
+}
+h1 .led { width: .5em; height: .5em; margin-right: .3em; vertical-align: .12em; }
+.sub { color: var(--muted); margin: 0; max-width: 60ch; }
+
+.racks { display: grid; gap: 1.75rem; }
+@media (min-width: 52rem) { .racks { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+.rack h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 .5rem .25rem; }
+/* frame do rack: trilhos com furos dos dois lados */
+.frame {
+  list-style: none; margin: 0; padding: .4rem 1.6rem; border-radius: 6px;
+  background:
+    radial-gradient(circle at .8rem 50%, var(--screw) 0 3px, transparent 3.5px) 0 0 / 100% 2.6rem repeat-y,
+    radial-gradient(circle at calc(100% - .8rem) 50%, var(--screw) 0 3px, transparent 3.5px) 0 0 / 100% 2.6rem repeat-y,
+    var(--rail);
+}
+.unit {
+  display: grid; grid-template-columns: auto 1fr auto; gap: .2rem .7rem; align-items: center;
+  background: var(--unit); padding: .65rem .8rem; margin: .3rem 0; border-radius: 3px;
+}
+.name {
+  font-weight: 700; text-decoration: none; background: var(--tape);
+  padding: .05rem .45rem; border-radius: 2px; justify-self: start;
+  box-shadow: 0 1px 0 var(--rail);
+}
+.name:hover { text-decoration: underline; }
+.state { font-size: .92rem; color: var(--muted); text-align: right; }
+.unit[data-nivel="minor"] .state, .unit[data-nivel="major"] .state,
+.unit[data-nivel="critical"] .state { color: var(--ink); font-weight: 700; }
+.incid { grid-column: 2 / -1; margin: .15rem 0 0; padding-left: 1rem; font-size: .9rem; }
+.incid li + li { margin-top: .15rem; }
+
+.led {
+  display: inline-block; width: .7rem; height: .7rem; border-radius: 50%;
+  background: var(--off); box-shadow: inset 0 -1px 2px rgb(0 0 0 / .35);
+}
+[data-nivel="ok"] .led, .led[data-nivel="ok"] { background: var(--ok); }
+[data-nivel="maint"] .led, .led[data-nivel="maint"] { background: var(--maint); }
+[data-nivel="minor"] .led, .led[data-nivel="minor"] { background: var(--minor); }
+[data-nivel="major"] .led, .led[data-nivel="major"] { background: var(--major); }
+[data-nivel="critical"] .led, .led[data-nivel="critical"] { background: var(--critical); }
+/* so o que esta com problema pisca: e para onde o olho deve ir */
+[data-nivel="minor"] .led, [data-nivel="major"] .led, [data-nivel="critical"] .led {
+  animation: pisca 1.6s ease-in-out infinite;
+}
+@keyframes pisca { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .led { animation: none !important; } }
+
+.foot { margin-top: 3rem; color: var(--muted); font-size: .9rem; max-width: 60ch; }
+.foot p { margin: .4rem 0; }
+@media (max-width: 30rem) {
+  .frame { padding: .3rem 1.2rem; }
+  .unit { grid-template-columns: auto 1fr; }
+  .state { grid-column: 2; text-align: left; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="back" href="https://sidneycavalcanti.com.br">Sidney Cavalcanti, infraestrutura</a>
+    <h1 id="resumo" aria-live="polite">Conferindo os serviços…</h1>
+    <p class="sub" id="quando">Os dados vêm das páginas oficiais de status de cada empresa e atualizam sozinhos a cada minuto.</p>
+  </header>
+
+  <main class="racks" id="racks"></main>
+
+  <footer class="foot">
+    <p>Clique no nome de um serviço para abrir a página oficial de status dele.</p>
+    <p>AWS, Azure e Microsoft 365 não deixam o navegador ler o status direto, então um robô no GitHub busca esses três a cada 5 minutos (às vezes atrasa um pouco). Na AWS, só conta como falha grave o que afeta São Paulo, N. Virginia ou serviços globais.</p>
+    <p>Bancos tradicionais (Itaú, Bradesco, Banco do Brasil, Caixa) não publicam status em tempo real. Por isso aparecem os meios de pagamento que publicam.</p>
+  </footer>
+</div>
+
+<script>
+const DADOS = "https://raw.githubusercontent.com/sidneycavalcanti/sidneycavalcanti.github.io/dados/status.json";
+const GRUPOS = {
+  ms: "Microsoft e Google",
+  nuvem: "Nuvem e rede",
+  com: "Comunicação",
+  trab: "Trabalho e desenvolvimento",
+  ia: "Inteligência artificial",
+  pag: "Pagamentos",
+};
+// sp = Atlassian Statuspage (api/v2/summary.json, com CORS)
+const sp = (nome, grupo, link, api = "/api/v2/summary.json") => ({ nome, grupo, link, tipo: "sp", url: link + api });
+const FONTES = [
+  { nome: "Microsoft 365", grupo: "ms", tipo: "srv", chave: "m365", link: "https://status.cloud.microsoft/" },
+  { nome: "Azure", grupo: "ms", tipo: "srv", chave: "azure", link: "https://azure.status.microsoft/pt-br/status" },
+  { nome: "Google Workspace", grupo: "ms", tipo: "google", link: "https://www.google.com/appsstatus/dashboard/",
+    url: "https://www.google.com/appsstatus/dashboard/incidents.json" },
+  { nome: "Google Cloud", grupo: "ms", tipo: "google", link: "https://status.cloud.google.com/",
+    url: "https://status.cloud.google.com/incidents.json" },
+  { nome: "AWS", grupo: "nuvem", tipo: "srv", chave: "aws", link: "https://health.aws.amazon.com/health/status" },
+  sp("Cloudflare", "nuvem", "https://www.cloudflarestatus.com"),
+  sp("Oracle Cloud", "nuvem", "https://ocistatus.oraclecloud.com", "/api/v2/status.json"),
+  { nome: "Slack", grupo: "com", tipo: "slack", link: "https://slack-status.com/",
+    url: "https://slack-status.com/api/v2.0.0/current" },
+  sp("Zoom", "com", "https://www.zoomstatus.com"),
+  sp("Discord", "com", "https://discordstatus.com"),
+  sp("Twilio", "com", "https://status.twilio.com"),
+  sp("GitHub", "trab", "https://www.githubstatus.com"),
+  sp("Jira e Confluence", "trab", "https://status.atlassian.com"),
+  sp("Dropbox", "trab", "https://status.dropbox.com"),
+  { nome: "Salesforce", grupo: "trab", tipo: "salesforce", link: "https://status.salesforce.com/",
+    url: "https://api.status.salesforce.com/v1/incidents/active" },
+  sp("ChatGPT e OpenAI", "ia", "https://status.openai.com"),
+  sp("Claude", "ia", "https://status.claude.com"),
+  sp("Mercado Pago", "pag", "https://status.mercadopago.com"),
+  sp("PagBank", "pag", "https://status.pagbank.com.br"),
+  sp("Cielo", "pag", "https://status.cielo.com.br"),
+  sp("Pagar.me", "pag", "https://status.pagar.me"),
+  sp("Efí", "pag", "https://status.sejaefi.com.br"),
+  sp("Asaas", "pag", "https://status.asaas.com"),
+];
+const TEXTO = { ok: "Operando", maint: "Em manutenção", minor: "Instável", major: "Falha parcial",
+                critical: "Fora do ar", erro: "Sem resposta", espera: "Conferindo…" };
+const PESO = { erro: 0, espera: 0, ok: 0, maint: 1, minor: 2, major: 3, critical: 4 };
+
+// cada leitor devolve { nivel, incidentes: [texto] }
+const LER = {
+  sp(d) {
+    const ind = (d.status && d.status.indicator) || "none";
+    const manut = (d.scheduled_maintenances || []).filter((m) => m.status === "in_progress");
+    const nivel = { none: "ok", minor: "minor", major: "major", critical: "critical", maintenance: "maint" }[ind] || "minor";
+    return {
+      nivel: nivel === "ok" && manut.length ? "maint" : nivel,
+      incidentes: (d.incidents || []).map((i) => i.name).concat(manut.map((m) => "Manutenção: " + m.name)),
+    };
+  },
+  google(d) {
+    const abertos = d.filter((i) => !i.end);
+    const sev = { low: "minor", medium: "major", high: "critical" };
+    const nivel = abertos.reduce((p, i) => (PESO[sev[i.severity] || "minor"] > PESO[p] ? sev[i.severity] || "minor" : p), "ok");
+    const resumo = (i) => String(i.external_desc || "").replace(/\*\*[^*]*\*\*/g, "").trim().split("\n")[0].slice(0, 140);
+    return { nivel, incidentes: abertos.map((i) => `${i.service_name}: ${resumo(i)}`) };
+  },
+  slack(d) {
+    const inc = d.active_incidents || [];
+    if (d.status === "ok" || !inc.length) return { nivel: "ok", incidentes: [] };
+    return { nivel: inc.some((i) => i.type === "outage") ? "major" : "minor", incidentes: inc.map((i) => i.title) };
+  },
+  salesforce(d) {
+    if (!d.length) return { nivel: "ok", incidentes: [] };
+    return {
+      nivel: d.some((i) => i.affectsAll || i.isCore) ? "major" : "minor",
+      incidentes: d.map((i) => `${i.type || "Incidente"} em ${(i.serviceKeys || []).join(", ") || "serviço"} (${(i.instanceKeys || []).length} instâncias)`),
+    };
+  },
+};
+
+async function json(url) {
+  const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+
+async function conferir(srv) {
+  return Promise.all(FONTES.map(async (f) => {
+    try {
+      if (f.tipo === "srv") {
+        const s = srv && srv.servicos && srv.servicos[f.chave];
+        return { ...f, ...(s || { nivel: "erro", incidentes: ["O robô do GitHub ainda não publicou este status."] }) };
+      }
+      return { ...f, ...LER[f.tipo](await json(f.url)) };
+    } catch (e) {
+      return { ...f, nivel: "erro", incidentes: ["A página de status não respondeu. Abra o link para conferir."] };
+    }
+  }));
+}
+
+// sempre ha algum incidente pequeno em algum lugar: o titulo nomeia so falha de verdade e conta o resto
+function frase(lista) {
+  const falhas = lista.filter((s) => PESO[s.nivel] >= 3).sort((a, b) => PESO[b.nivel] - PESO[a.nivel]);
+  const instaveis = lista.filter((s) => s.nivel === "minor").length;
+  if (falhas.length) {
+    const nomes = falhas.slice(0, 3).map((s) => s.nome);
+    const resto = falhas.length - nomes.length;
+    const junta = resto ? `${nomes.join(", ")} e mais ${resto}`
+      : nomes.length > 1 ? nomes.slice(0, -1).join(", ") + " e " + nomes.at(-1) : nomes[0];
+    return { nivel: falhas[0].nivel, texto: `${junta} com falha agora.` };
+  }
+  if (instaveis) return { nivel: "minor", texto: `Nada fora do ar. ${instaveis === 1 ? "1 serviço instável" : `${instaveis} serviços instáveis`}.` };
+  return { nivel: "ok", texto: "Tudo operando." };
+}
+
+function el(tag, attrs = {}, ...filhos) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  n.append(...filhos);
+  return n;
+}
+
+function desenhar(lista, srv) {
+  const racks = document.getElementById("racks");
+  racks.replaceChildren(...Object.entries(GRUPOS).map(([g, titulo]) => {
+    const itens = lista.filter((s) => s.grupo === g).map((s) => {
+      const li = el("li", { class: "unit", "data-nivel": s.nivel },
+        el("span", { class: "led", "aria-hidden": "true" }),
+        el("a", { class: "name", href: s.link, target: "_blank", rel: "noopener" }, s.nome),
+        el("span", { class: "state" }, TEXTO[s.nivel]));
+      if (s.incidentes && s.incidentes.length && s.nivel !== "ok")
+        li.append(el("ul", { class: "incid" }, ...s.incidentes.slice(0, 4).map((t) => el("li", {}, t))));
+      return li;
+    });
+    return el("section", { class: "rack", "aria-labelledby": "g-" + g },
+      el("h2", { id: "g-" + g }, titulo), el("ul", { class: "frame" }, ...itens));
+  }));
+
+  const r = frase(lista);
+  const h1 = document.getElementById("resumo");
+  h1.replaceChildren(el("span", { class: "led", "data-nivel": r.nivel, "aria-hidden": "true" }), r.texto);
+  const ruins = lista.filter((s) => PESO[s.nivel] >= 3).length;
+  document.title = (ruins ? `(${ruins}) ` : "") + "Status dos serviços";
+
+  const hora = (d) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  let txt = `${lista.length} serviços conferidos às ${hora(new Date())}. Atualiza sozinho a cada minuto.`;
+  if (srv && srv.gerado) {
+    const min = Math.round((Date.now() - new Date(srv.gerado)) / 60000);
+    txt += ` AWS, Azure e Microsoft 365 foram lidos ${min <= 1 ? "há 1 minuto" : `há ${min} minutos`}.`;
+  }
+  document.getElementById("quando").textContent = txt;
+}
+
+async function ciclo() {
+  const srv = await json(DADOS + "?t=" + Date.now()).catch(() => null);
+  desenhar(await conferir(srv), srv);
+}
+
+if (typeof document !== "undefined") {
+  desenhar(FONTES.map((f) => ({ ...f, nivel: "espera", incidentes: [] })), null);
+  document.getElementById("resumo").textContent = "Conferindo os serviços…";
+  ciclo();
+  setInterval(ciclo, 60000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Coleta AWS, Azure e Microsoft 365 (sem CORS) e grava status.json no branch "dados".
+# O branch tem sempre um commit so (push forcado), entao o historico do main nao enche.
+name: status
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: status
+  cancel-in-progress: true
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Coletar
+        run: python3 scripts/coletar.py > /tmp/status.json && cat /tmp/status.json
+      - name: Publicar no branch dados
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir /tmp/dados && cd /tmp/dados && cp /tmp/status.json .
+          git init -q -b dados
+          git add status.json
+          git -c user.name="status-bot" -c user.email="actions@github.com" commit -qm "status $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}" dados
