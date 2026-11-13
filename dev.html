@@ -48,17 +48,18 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 .wrap { max-width: 74rem; margin: 0 auto; padding: 0 1rem; }
 
-[data-nivel="ok"] { --c: var(--ok); --ic: "✓"; }
-[data-nivel="maint"] { --c: var(--maint); --ic: "⚙"; }
-[data-nivel="minor"] { --c: var(--minor); --ic: "!"; }
-[data-nivel="major"] { --c: var(--major); --ic: "▲"; }
-[data-nivel="critical"] { --c: var(--critical); --ic: "✕"; }
-[data-nivel="erro"], [data-nivel="espera"] { --c: var(--off); --ic: "?"; }
-/* icone redondo com o simbolo do estado: a cor nunca fala sozinha */
+[data-nivel="ok"] { --c: var(--ok); }
+[data-nivel="maint"] { --c: var(--maint); }
+[data-nivel="minor"] { --c: var(--minor); }
+[data-nivel="major"] { --c: var(--major); }
+[data-nivel="critical"] { --c: var(--critical); }
+[data-nivel="erro"], [data-nivel="espera"] { --c: var(--off); }
+[data-nivel="inc"] { --c: var(--accent); }
+/* icone redondo com o simbolo do estado (SVG, igual em qualquer fonte): a cor nunca fala sozinha */
 .ico { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%;
-  background: var(--c); color: #fff; font-size: .72rem; font-weight: 700; flex: none; line-height: 1; }
-.ico::before { content: var(--ic); }
-[data-nivel="minor"] .ico, [data-nivel="minor"].ico { color: #3a2a00; }
+  background: var(--c); color: #fff; flex: none; }
+.ico svg { width: 72%; height: 72%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ico[data-nivel="minor"] { color: #3a2a00; }
 .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--c); flex: none; }
 
 /* ---------- topo ---------- */
@@ -80,9 +81,12 @@ h1 { font-size: clamp(2.2rem, 6vw, 3.8rem); font-weight: 700; line-height: 1.04;
 .banner .ico { background: rgb(255 255 255 / .92); color: var(--c); width: 1.6rem; height: 1.6rem; font-size: .9rem; }
 .banner small { display: block; font-weight: 400; font-size: .88rem; opacity: .9; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-top: .9rem; }
-.kpi { background: rgb(255 255 255 / .07); border: 1px solid rgb(255 255 255 / .13); border-radius: 14px; padding: .9rem 1rem; }
-.kpi b { display: block; font-size: 2.1rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
-.kpi span { display: flex; align-items: center; gap: .45rem; color: var(--band-muted); font-size: .9rem; }
+.kpi { display: flex; align-items: center; gap: .85rem; background: rgb(255 255 255 / .07);
+  border: 1px solid rgb(255 255 255 / .13); border-radius: 14px; padding: .9rem 1rem; }
+.kpi .ico { width: 2.6rem; height: 2.6rem; border-radius: 12px; }
+.kpi .ico[data-nivel="inc"] { background: rgb(255 255 255 / .16); color: var(--band-ink); }
+.kpi b { display: block; font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+.kpi span { color: var(--band-muted); font-size: .9rem; }
 
 /* ---------- cartoes e graficos ---------- */
 main.wrap { padding-top: 2.4rem; }
@@ -565,7 +569,22 @@ function relativo(iso) {
   for (const [u, n] of [["day", 86400], ["hour", 3600], ["minute", 60]]) if (Math.abs(s) >= n) return rtf.format(Math.round(s / n), u);
   return rtf.format(Math.round(s), "second");
 }
-const ico = (nivel) => el("span", { class: "ico", "data-nivel": nivel, "aria-hidden": "true" });
+// desenho de cada icone (viewBox 24): check, exclamacao, triangulo de alerta, X, chave, interrogacao, lista
+const ICONES = {
+  ok: "M6 12.5l4 4L18 8",
+  minor: "M12 6.5v7M12 17.5v.01",
+  major: "M12 5L20 19H4zM12 10.5v3.5M12 16.8v.01",
+  critical: "M7.5 7.5l9 9M16.5 7.5l-9 9",
+  maint: "M14.5 6.5a4 4 0 0 0-5 5L5 16l3 3 4.5-4.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z",
+  erro: "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.6v.4M12 17.5v.01",
+  espera: "M12 7v5l3 2",
+  inc: "M8 7.5h10M8 12h10M8 16.5h10M5 7.5v.01M5 12v.01M5 16.5v.01",
+};
+const ico = (nivel) => {
+  const n = el("span", { class: "ico", "data-nivel": nivel, "aria-hidden": "true" });
+  n.innerHTML = `<svg viewBox="0 0 24 24"><path d="${ICONES[nivel] || ICONES.erro}"/></svg>`;
+  return n;
+};
 const pill = (nivel) => el("span", { class: "pill", "data-nivel": nivel }, ico(nivel), T[LANG].estado[nivel]);
 const ordem = (a, b) => PESO[b.nivel] - PESO[a.nivel];
 
@@ -604,9 +623,9 @@ function desenhar() {
     ["ok", conta((s) => s.nivel === "ok" || s.nivel === "maint"), t.kOk],
     ["minor", conta((s) => s.nivel === "minor"), t.kInst],
     ["major", falhas, t.kFalha],
-    [null, incAbertos, t.kInc],
-  ].map(([k, n, rot]) => el("div", { class: "kpi" }, el("b", {}, carregando ? "–" : String(n)),
-    el("span", {}, k ? ico(k) : null, rot))));
+    ["inc", incAbertos, t.kInc],
+  ].map(([k, n, rot]) => el("div", { class: "kpi" }, ico(k),
+    el("div", {}, el("b", {}, carregando ? "–" : String(n)), el("span", {}, rot)))));
 
   // graficos
   $("g-todos").replaceChildren(...pilha(ATUAL, true));
