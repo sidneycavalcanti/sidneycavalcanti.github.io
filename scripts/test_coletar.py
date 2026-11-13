@@ -31,6 +31,8 @@ i = r["incidentes"][0]
 assert r["nivel"] == "major" and i["titulo"] == "Sem e-mail", r
 assert i["atualizacoes"][0]["texto"] == "Restoring servers." and i["atualizacoes"][1]["texto"] == "Investigating."
 assert i["proxima"] == "Friday, November 13, 2026, at 12:30 AM UTC" and i["resumo"].startswith("Users can't connect.")
+resp({"Status": "Service degradation", "Title": "", "Message": "User impact: Users can't send mail. More info: x."})
+assert c.microsoft("mac")["incidentes"][0]["titulo"] == "Users can't send mail."
 resp({"Status": "Service interruption", "Title": "T", "Message": ""})
 assert c.microsoft("mac")["nivel"] == "critical"
 

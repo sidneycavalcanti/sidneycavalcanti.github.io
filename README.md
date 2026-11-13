@@ -8,6 +8,7 @@ Abra em **https://sidneycavalcanti.github.io/dev.html**
 
 - `dev.html` lê direto, a cada minuto, as páginas oficiais de status que liberam o navegador (CORS). Clique num serviço para ver impacto, afetados, previsão de solução, próxima atualização e o histórico oficial. Botão PT/EN no topo; `dev.html#Microsoft 365` abre direto o painel do serviço.
 - AWS, Azure e Microsoft 365 não liberam. O Action `.github/workflows/status.yml` roda `scripts/coletar.py` a cada 5 minutos e grava `status.json` no branch `dados` (sempre um commit só). A página lê esse arquivo.
+- **Modo painel (TV/monitor):** botão "Modo painel" no topo, ou abra `dev.html?painel`. Tela única sem rolagem, relógio, tela não apaga, cursor some parado, detalhes fecham sozinhos em 90 s sem uso e a página recarrega a cada 6 h. Para TV fixa, abra o navegador em modo quiosque: `msedge --kiosk "https://sidneycavalcanti.github.io/dev.html?painel" --edge-kiosk-type=fullscreen`.
 - Para incluir um serviço, acrescente uma linha em `FONTES` no `dev.html`. Se ele usa Atlassian Statuspage (tem `/api/v2/summary.json`), basta `sp("Nome", "grupo", "https://status.exemplo.com")`.
 
 ## Testes

@@ -200,6 +200,54 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   .row { grid-template-columns: 1fr auto; }
   .row .stack { grid-column: 1 / -1; grid-row: 2; }
 }
+/* ---------- modo painel (TV / monitor de acompanhamento) ---------- */
+.tools { display: flex; align-items: center; gap: .6rem; }
+.tvbtn { border: 1px solid rgb(255 255 255 / .16); background: rgb(255 255 255 / .08); color: var(--band-ink);
+  border-radius: 999px; padding: .38rem .9rem; font-weight: 600; font-size: .9rem; cursor: pointer; }
+.tvbtn:hover { background: rgb(255 255 255 / .16); }
+#relogio, #mural { display: none; }
+@media (min-width: 60rem) {
+  html.tv { font-size: clamp(13px, .86vw, 24px); }
+  html.tv body { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  html.tv .band .wrap, html.tv main.wrap { max-width: none; padding-inline: 1.5rem; }
+  html.tv .bar { padding: .7rem 0; }
+  html.tv #relogio { display: block; color: var(--band-ink); font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
+  html.tv .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: .9rem 1.2rem; align-items: center; padding: 0 0 1.1rem; }
+  html.tv h1 { font-size: 2.6rem; margin: 0; }
+  html.tv .intro { display: none; }
+  html.tv .kpis { grid-column: 1 / -1; margin: 0; }
+  html.tv main.wrap { flex: 1; min-height: 0; padding-block: 1.1rem; display: grid; gap: 1.1rem;
+    grid-template-columns: minmax(0, 36fr) minmax(0, 64fr); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "esq mural" "esq news"; }
+  html.tv main > section:first-child { grid-area: esq; min-height: 0; }
+  html.tv main section + section { margin: 0; }
+  html.tv #h-visao, html.tv #h-news, html.tv #grupos, html.tv .foot, html.tv .card .note { display: none; }
+  html.tv .charts { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(0, 1fr); height: 100%; gap: .8rem; }
+  html.tv .charts > .card:last-child { display: flex; flex-direction: column; min-height: 0; }
+  html.tv .cols { flex: 1; height: auto; min-height: 3rem; }
+  html.tv .news { grid-area: news; }
+  html.tv .feed button { padding: .55rem 1rem; }
+  html.tv .feed p { -webkit-line-clamp: 1; }
+  html.tv #mural { grid-area: mural; display: grid; min-height: 0; gap: .6rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); }
+  html.tv.ocioso, html.tv.ocioso * { cursor: none !important; }
+  html.tv .feed strong { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+/* tela baixa (ex.: 1366x768): o mural mostra nome e estado; o texto do incidente fica a um clique */
+@media (min-width: 60rem) and (max-height: 56rem) {
+  html.tv .mt-nota { display: none; }
+}
+.mt { position: relative; display: flex; flex-direction: column; justify-content: center; gap: .2rem; min-width: 0; overflow: hidden;
+  text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: .45rem .8rem .45rem 1.05rem; line-height: 1.3; }
+.mt::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 6px; background: var(--c); }
+.mt:not([data-nivel="ok"]):not([data-nivel="espera"]) { background: linear-gradient(100deg, color-mix(in srgb, var(--c) 16%, var(--surface)), var(--surface) 75%);
+  border-color: color-mix(in srgb, var(--c) 50%, var(--line)); }
+.mt:hover { border-color: var(--accent); }
+.mt-nome { font-weight: 650; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt-estado { display: flex; align-items: center; gap: .4rem; font-size: .88rem; font-weight: 600; }
+.mt-estado .ico { width: 1.1rem; height: 1.1rem; }
+.mt-nota { color: var(--muted); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -208,9 +256,13 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   <div class="wrap">
     <div class="bar">
       <a class="brand" href="https://sidneycavalcanti.com.br" data-t="marca"></a>
-      <div class="seg" role="group" aria-label="Idioma / Language">
-        <button type="button" data-lang="pt">PT</button>
-        <button type="button" data-lang="en">EN</button>
+      <div class="tools">
+        <span id="relogio"></span>
+        <button type="button" class="tvbtn" id="btn-tv"></button>
+        <div class="seg" role="group" aria-label="Idioma / Language">
+          <button type="button" data-lang="pt">PT</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
       </div>
     </div>
     <header class="hero">
@@ -247,11 +299,12 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
     </div>
   </section>
 
-  <section aria-labelledby="h-news">
+  <section class="news" aria-labelledby="h-news">
     <h2 id="h-news" data-t="ultimas"></h2>
     <div id="feed"></div>
   </section>
 
+  <div id="mural"></div>
   <div id="grupos"></div>
 
   <footer class="foot">
@@ -301,6 +354,7 @@ const T = {
     semNovidade: "Nenhum incidente aberto agora. As atualizações das empresas aparecem aqui assim que forem publicadas.",
     semIncidente: "Sem incidentes abertos",
     detalhes: "Ver detalhes", fechar: "Fechar",
+    painel: "Modo painel", sairPainel: "Sair do modo painel",
     pagina: "Abrir a página oficial de status",
     okPainel: "Nenhum incidente aberto. O serviço está funcionando normalmente segundo a empresa.",
     erroPainel: "A página de status não respondeu. Abra a página oficial para conferir.",
@@ -339,6 +393,7 @@ const T = {
     semNovidade: "No open incidents right now. Provider updates show up here as soon as they are posted.",
     semIncidente: "No open incidents",
     detalhes: "View details", fechar: "Close",
+    painel: "Display mode", sairPainel: "Exit display mode",
     pagina: "Open the official status page",
     okPainel: "No open incidents. The provider reports the service is working normally.",
     erroPainel: "The status page did not respond. Open the official page to check.",
@@ -451,6 +506,11 @@ function normaliza(inc) {
   if (typeof inc === "string") inc = { titulo: inc };  // formato antigo do status.json
   inc.atualizacoes = inc.atualizacoes || [];
   inc.afetados = inc.afetados || [];
+  // titulo vazio (a Microsoft as vezes publica assim): primeira frase do impacto ou da ultima atualizacao
+  if (!String(inc.titulo || "").trim()) {
+    const base = inc.resumo || (inc.atualizacoes[0] && inc.atualizacoes[0].texto) || inc.status || "";
+    inc.titulo = String(base).split(/(?<=\.)\s/)[0].slice(0, 160);
+  }
   if (!inc.proxima) [inc.proxima, inc.proximaDita] = achar(RE_PROXIMA, inc);
   if (!inc.previsao) [inc.previsao, inc.previsaoDita] = achar(RE_PREVISAO, inc);
   return inc;
@@ -658,7 +718,7 @@ function desenhar() {
   }));
   itens.sort((a, b) => (Date.parse(b.quando) || 0) - (Date.parse(a.quando) || 0));
   $("feed").replaceChildren(itens.length
-    ? el("ul", { class: "feed" }, ...itens.slice(0, 6).map((x) => el("li", {},
+    ? el("ul", { class: "feed" }, ...itens.slice(0, emTV() ? 3 : 6).map((x) => el("li", {},
         el("button", { type: "button", on: () => abrir(x.s.nome) },
           ico(x.s.nivel), el("strong", {}, `${x.s.nome}: `, tx("span", {}, x.i.titulo)),
           el("time", { datetime: x.quando || "" }, relativo(x.quando)), tx("p", {}, x.texto)))))
@@ -675,7 +735,34 @@ function desenhar() {
           s.incidentes.length ? tx("p", { class: "tile-note" }, s.incidentes.map((i) => i.titulo).join(" | "))
                               : el("p", { class: "tile-note" }, t.semIncidente)))))));
 
+  // mural do modo painel: os 23 servicos numa tela, quem tem problema primeiro
+  $("btn-tv").textContent = emTV() ? t.sairPainel : t.painel;
+  $("mural").replaceChildren(...[...ATUAL].sort(ordem).map((s) =>
+    el("button", { type: "button", class: "mt", "data-nivel": s.nivel, "aria-label": `${s.nome}: ${t.estado[s.nivel]}. ${t.detalhes}`,
+                   on: () => abrir(s.nome) },
+      el("span", { class: "mt-nome" }, s.nome),
+      el("span", { class: "mt-estado" }, ico(s.nivel), t.estado[s.nivel]),
+      s.incidentes.length ? tx("span", { class: "mt-nota" }, s.incidentes[0].titulo) : null)));
+
   if (ABERTO) preencher(ABERTO);
+}
+
+/* ---------- modo painel: tela cheia, sem rolagem, feito para ficar ligado ---------- */
+const emTV = () => typeof document !== "undefined" && document.documentElement.classList.contains("tv");
+let TELA = null;
+async function telaLigada() {  // impede a TV/monitor de apagar enquanto o painel esta aberto
+  try { if (emTV() && "wakeLock" in navigator) TELA = await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+function modoPainel(ligar, telaCheia) {
+  document.documentElement.classList.toggle("tv", ligar);
+  const q = ligar ? "?painel" : "";
+  history.replaceState(null, "", location.pathname + q + location.hash);
+  if (telaCheia) {
+    if (ligar && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+    if (!ligar && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }
+  if (ligar) telaLigada(); else if (TELA) TELA.release().catch(() => {});
+  desenhar();
 }
 
 // prazo -> [texto, pode traduzir?]. Data reconhecida vira horario local de quem ve; hora que nao deu para
@@ -746,7 +833,28 @@ if (typeof document !== "undefined") {
   const d = $("painel");
   $("fechar").addEventListener("click", () => d.close());
   d.addEventListener("click", (e) => { if (e.target === d) d.close(); });  // clique fora fecha
-  d.addEventListener("close", () => { ABERTO = null; history.replaceState(null, "", location.pathname); });
+  d.addEventListener("close", () => { ABERTO = null; history.replaceState(null, "", location.pathname + location.search); });
+
+  // modo painel: botao, ?painel no endereco, relogio, cursor some parado, detalhes fecham sozinhos
+  $("btn-tv").addEventListener("click", () => modoPainel(!emTV(), true));
+  if (new URLSearchParams(location.search).has("painel")) document.documentElement.classList.add("tv");
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") telaLigada(); });
+  telaLigada();
+  const relogio = () => { $("relogio").textContent = new Date().toLocaleString(T[LANG].locale,
+    { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }); };
+  relogio(); setInterval(relogio, 1000);
+  let parado, semUso;
+  const mexeu = () => {
+    document.documentElement.classList.remove("ocioso");
+    clearTimeout(parado); clearTimeout(semUso);
+    parado = setTimeout(() => document.documentElement.classList.add("ocioso"), 5000);
+    semUso = setTimeout(() => { if (emTV() && d.open) d.close(); }, 90000);
+  };
+  ["mousemove", "mousedown", "keydown", "touchstart", "wheel"].forEach((ev) => addEventListener(ev, mexeu, { passive: true }));
+  mexeu();
+  // a cada 6 h recarrega a pagina inteira (pega melhorias e limpa memoria), se ninguem estiver lendo um detalhe
+  setInterval(() => { if (emTV() && !d.open) location.reload(); }, 6 * 3600000);
+
   ATUAL = FONTES.map((f) => ({ ...f, nivel: "espera", incidentes: [] }));
   desenhar();
   const alvo = decodeURIComponent(location.hash.slice(1));

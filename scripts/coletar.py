@@ -81,8 +81,10 @@ def microsoft(servico):
         atualizacoes.append({"quando": None, "status": "Previous status", "texto": s["Previous status"]})
     # a pagina publica da Microsoft so mostra incidente amplo: qualquer aviso ja e falha parcial
     grave = any(p in st.lower() for p in ("interruption", "outage", "down"))
+    # a Microsoft as vezes publica o aviso sem titulo: usa a primeira frase do impacto
+    titulo = (d.get("Title") or "").strip() or re.split(r"(?<=\.)\s", s.get("User impact") or st)[0][:160]
     return {"nivel": "critical" if grave else "major", "incidentes": [{
-        "titulo": d.get("Title"), "status": st,
+        "titulo": titulo, "status": st,
         "inicio": s.get("Start time") or d.get("AuthoredDateTime"), "atualizado": d.get("LastUpdatedTime"),
         "resumo": " ".join(x for x in (s.get("User impact"), s.get("More info"), s.get("Scope of impact")) if x)[:2500],
         "afetados": [], "atualizacoes": atualizacoes,

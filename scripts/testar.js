@@ -29,6 +29,7 @@ assert.equal(i.previsao, "2 hours");
 i = normaliza({ titulo: "x", atualizacoes: [{ texto: "Previsão de normalização: 18h" }] });
 assert.equal(i.previsao, "18h");
 assert.deepEqual(normaliza("antigo").atualizacoes, []);
+assert.equal(normaliza({ titulo: "", resumo: "Users can't connect. More text." }).titulo, "Users can't connect.");
 
 // frase do topo, nos dois idiomas
 const S = (nome, nivel) => ({ nome, nivel });
