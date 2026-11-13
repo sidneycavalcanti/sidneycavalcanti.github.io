@@ -207,8 +207,10 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
 .tvbtn:hover { background: rgb(255 255 255 / .16); }
 #relogio, #mural { display: none; }
 @media (min-width: 60rem) {
-  html.tv { font-size: clamp(13px, .86vw, 24px); }
-  html.tv body { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  /* a letra acompanha a largura E a altura da janela: com abas e barra de endereco a altura e menor que em F11 */
+  html.tv { font-size: clamp(12px, min(.86vw, 1.6vh), 24px); --mt-min: 5rem; }
+  /* preenche a tela; se ainda assim nao couber, rola em vez de cortar */
+  html.tv body { min-height: 100dvh; display: flex; flex-direction: column; }
   html.tv .band .wrap, html.tv main.wrap { max-width: none; padding-inline: 1.5rem; }
   html.tv .bar { padding: .7rem 0; }
   html.tv #relogio { display: block; color: var(--band-ink); font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
@@ -216,10 +218,10 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   html.tv h1 { font-size: 2.6rem; margin: 0; }
   html.tv .intro { display: none; }
   html.tv .kpis { grid-column: 1 / -1; margin: 0; }
-  html.tv main.wrap { flex: 1; min-height: 0; padding-block: 1.1rem; display: grid; gap: 1.1rem;
-    grid-template-columns: minmax(0, 36fr) minmax(0, 64fr); grid-template-rows: minmax(0, 1fr) auto;
+  html.tv main.wrap { flex: 1; padding-block: 1.1rem; display: grid; gap: 1.1rem;
+    grid-template-columns: minmax(20rem, 36fr) minmax(0, 64fr); grid-template-rows: 1fr auto;
     grid-template-areas: "esq mural" "esq news"; }
-  html.tv main > section:first-child { grid-area: esq; min-height: 0; }
+  html.tv main > section:first-child { grid-area: esq; }
   html.tv main section + section { margin: 0; }
   html.tv #h-visao, html.tv #h-news, html.tv #grupos, html.tv .foot, html.tv .card .note { display: none; }
   html.tv .charts { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(0, 1fr); height: 100%; gap: .8rem; }
@@ -228,13 +230,15 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   html.tv .news { grid-area: news; }
   html.tv .feed button { padding: .55rem 1rem; }
   html.tv .feed p { -webkit-line-clamp: 1; }
-  html.tv #mural { grid-area: mural; display: grid; min-height: 0; gap: .6rem;
-    grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); }
+  /* colunas conforme a largura; cada cartao tem altura minima, entao o estado nunca e cortado */
+  html.tv #mural { grid-area: mural; display: grid; gap: .6rem;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); grid-auto-rows: minmax(var(--mt-min), 1fr); }
   html.tv.ocioso, html.tv.ocioso * { cursor: none !important; }
   html.tv .feed strong { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 /* tela baixa (ex.: 1366x768): o mural mostra nome e estado; o texto do incidente fica a um clique */
 @media (min-width: 60rem) and (max-height: 56rem) {
+  html.tv { --mt-min: 3.7rem; }
   html.tv .mt-nota { display: none; }
 }
 .mt { position: relative; display: flex; flex-direction: column; justify-content: center; gap: .2rem; min-width: 0; overflow: hidden;
