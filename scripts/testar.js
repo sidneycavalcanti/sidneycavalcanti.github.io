@@ -3,7 +3,7 @@ const fs = require("fs");
 const assert = require("assert");
 const html = fs.readFileSync(__dirname + "/../dev.html", "utf8");
 const js = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));
-const { FONTES, LER, T, conferir, frase, normaliza } = new Function(js + "; return { FONTES, LER, T, conferir, frase, normaliza };")();
+const { FONTES, LER, T, conferir, frase, normaliza, atividade } = new Function(js + "; return { FONTES, LER, T, conferir, frase, normaliza, atividade };")();
 
 // leitores
 assert.deepEqual(LER.sp({ status: { indicator: "none" } }), { nivel: "ok", incidentes: [] });
@@ -34,10 +34,27 @@ assert.deepEqual(normaliza("antigo").atualizacoes, []);
 const S = (nome, nivel) => ({ nome, nivel });
 assert.equal(frase([S("A", "major"), S("B", "critical"), S("C", "minor")]).texto, "B e A com falha agora.");
 assert.equal(frase([S("A", "major"), S("B", "major"), S("C", "major"), S("D", "major")]).texto, "A, B, C e mais 1 com falha agora.");
-assert.equal(frase([S("A", "minor"), S("B", "minor"), S("C", "ok")]).texto, "Nada fora do ar. 2 serviços instáveis.");
-assert.equal(frase([S("A", "ok"), S("B", "maint")]).texto, "Tudo operando.");
+assert.equal(frase([S("A", "minor"), S("B", "minor"), S("C", "ok")]).texto, "2 serviços com instabilidade, nenhum fora do ar.");
+assert.equal(frase([S("A", "ok"), S("B", "maint")]).texto, "Todos os serviços operando normalmente.");
 assert.equal(frase([S("Microsoft 365", "major")], T.en).texto, "Microsoft 365 is having an outage.");
 assert.equal(frase([S("A", "major"), S("B", "major")], T.en).texto, "A and B are having an outage.");
+const agora = Date.parse("2026-11-13T12:30:00Z");
+const h = atividade([{ incidentes: [{ atualizacoes: [{ quando: "2026-11-13T12:10:00Z" }, { quando: "2026-11-13T11:50:00Z" },
+  { quando: "2026-11-12T13:00:00Z" }, { quando: "2026-11-11T10:00:00Z" }] }] }], agora);
+assert.equal(h.length, 24); assert.equal(h[23], 1); assert.equal(h[22], 1); assert.equal(h[0], 1);
+assert.equal(h.reduce((a, b) => a + b, 0), 3, "fora das 24 h nao conta");
+// nomes de produto protegidos da traducao
+const { protege, devolve } = new Function(js + "; return { protege, devolve };")();
+const p = protege("Users can't reach Exchange Online, Microsoft Teams and Teams. Exchange is down.");
+assert.equal(p.s, "Users can't reach ⟦0⟧, ⟦1⟧ and ⟦2⟧. ⟦3⟧ is down.");
+assert.equal(devolve("Usuários sem ⟦0⟧, ⟦1⟧ e ⟦ 2 ⟧. ⟦3⟧ fora.", p.termos), "Usuários sem Exchange Online, Microsoft Teams e Teams. Exchange fora.");
+// prazo: data da Microsoft vira horario local (nunca traduzida); hora solta nao passa pelo tradutor
+const { prazo } = new Function(js + "; return { prazo };")();
+const sem = () => "";
+assert.equal(prazo("Friday, November 13, 2026, at 12:30 AM UTC", null, sem)[1], false);
+assert.match(prazo("Friday, November 13, 2026, at 12:30 AM UTC", null, sem)[0], /2026/);
+assert.deepEqual(prazo("14:00 UTC", null, sem), ["14:00 UTC", false]);
+assert.deepEqual(prazo("4 hours", null, sem), ["4 hours", true]);
 assert.deepEqual(Object.keys(T.pt).sort(), Object.keys(T.en).sort(), "PT e EN com as mesmas chaves");
 console.log("casos fixos ok");
 
