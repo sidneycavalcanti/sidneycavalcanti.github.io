@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Status dos serviços</title>
+<script>try { var t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.tema = t; } catch (e) {}</script>
 <meta name="description" content="Status em tempo real dos serviços de que as empresas dependem: Microsoft 365, Google, AWS, pagamentos e mais.">
 <meta name="theme-color" content="#221d5c">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23221d5c'/%3E%3Crect x='12' y='34' width='9' height='16' rx='3' fill='%230ca30c'/%3E%3Crect x='27' y='24' width='9' height='26' rx='3' fill='%23fab219'/%3E%3Crect x='42' y='14' width='9' height='36' rx='3' fill='%23ec835a'/%3E%3C/svg%3E">
@@ -34,11 +35,18 @@
   --tint: 14%;
   --radius: 18px;
 }
+/* tema: segue o sistema; o botao sol/lua no topo fixa claro ou escuro (preferencia deste navegador) */
+:root[data-tema="claro"] { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     --bg: #0f1220; --surface: #171b2b; --line: #272d42; --ink: #e9ecf5; --muted: #9ba4b8;
     --accent: #9a92ff; --band: #19163f; --band-2: #241f58; --maint: #3987e5; --seq: #3987e5; --off: #6b7385; --tint: 20%;
   }
+}
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+    --bg: #0f1220; --surface: #171b2b; --line: #272d42; --ink: #e9ecf5; --muted: #9ba4b8;
+    --accent: #9a92ff; --band: #19163f; --band-2: #241f58; --maint: #3987e5; --seq: #3987e5; --off: #6b7385; --tint: 20%;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -209,7 +217,7 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
 /* me pague um cafe: botao no topo abre a janela com Buy Me a Coffee (cartao) e Pix (copia a chave) */
 .cafe { border: 0; background: #ffdd00; color: #1a1400; border-radius: 999px; padding: .38rem .9rem; font-weight: 650; font-size: .9rem; cursor: pointer; text-decoration: none; }
 .cafe:hover { background: #f2d000; }
-html.tv #btn-cafe { display: none; }
+html.tv #btn-cafe, html.tv #btn-tema { display: none; }
 dialog.doar { border: 0; border-radius: 18px; padding: 1.4rem; width: min(26rem, 92vw); background: var(--surface); color: var(--ink); }
 dialog.doar::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2px); }
 dialog.doar h2 { margin: 0 0 .3rem; font-size: 1.3rem; } dialog.doar p { margin: 0 0 1rem; color: var(--muted); }
@@ -277,6 +285,7 @@ dialog.doar .cafe { display: block; text-align: center; padding: .7rem; font-siz
         <span id="relogio"></span>
         <button type="button" class="cafe" id="btn-cafe" data-t="cafe"></button>
         <button type="button" class="tvbtn" id="btn-tv"></button>
+        <button type="button" class="tvbtn" id="btn-tema"></button>
         <div class="seg" role="group" aria-label="Idioma / Language">
           <button type="button" data-lang="pt">PT</button>
           <button type="button" data-lang="en">EN</button>
@@ -381,6 +390,7 @@ const T = {
     semIncidente: "Sem incidentes abertos",
     detalhes: "Ver detalhes", fechar: "Fechar",
     painel: "Modo painel", sairPainel: "Sair do modo painel",
+    temaClaro: "☀️ Claro", temaEscuro: "🌙 Escuro", temaDica: "Trocar cores (tema claro / escuro)",
     cafe: "☕ Me pague um café", cafeTexto: "Gostou do painel? Qualquer valor ajuda a manter o projeto no ar.",
     cafeCartao: "Cartão, Apple Pay ou Google Pay", copiar: "Copiar chave", copiado: "Copiada!",
     cafePix: "No app do banco: Pix → Pagar com chave → cole a chave (celular).",
@@ -423,6 +433,7 @@ const T = {
     semIncidente: "No open incidents",
     detalhes: "View details", fechar: "Close",
     painel: "Display mode", sairPainel: "Exit display mode",
+    temaClaro: "☀️ Light", temaEscuro: "🌙 Dark", temaDica: "Switch colors (light / dark theme)",
     cafe: "☕ Buy me a coffee", cafeTexto: "Like this page? Any amount helps keep the project running.",
     cafeCartao: "Card, Apple Pay or Google Pay", copiar: "Copy key", copiado: "Copied!",
     cafePix: "Pix (Brazil): in your bank app, Pix → Pay with key → paste the key (phone).",
@@ -869,6 +880,17 @@ if (typeof document !== "undefined") {
 
   // modo painel: botao, ?painel no endereco, relogio, cursor some parado, detalhes fecham sozinhos
   $("btn-tv").addEventListener("click", () => modoPainel(!emTV(), true));
+  // tema: alterna claro/escuro a partir do que esta na tela agora e guarda a escolha
+  const escuro = () => document.documentElement.dataset.tema ? document.documentElement.dataset.tema === "escuro" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const botaoTema = () => { const b = $("btn-tema"); b.textContent = escuro() ? T[LANG].temaClaro : T[LANG].temaEscuro; b.title = T[LANG].temaDica; };
+  $("btn-tema").addEventListener("click", () => {
+    const t = escuro() ? "claro" : "escuro";
+    document.documentElement.dataset.tema = t;
+    try { localStorage.setItem("tema", t); } catch (e) {}
+    botaoTema();
+  });
+  document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", botaoTema));
+  botaoTema();
   const doar = $("doar");
   $("btn-cafe").addEventListener("click", () => doar.showModal());
   $("d-fechar").addEventListener("click", () => doar.close());

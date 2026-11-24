@@ -2,7 +2,7 @@
 
 Painel em tempo real dos serviços de que as empresas dependem: Microsoft 365, Azure, Google, AWS, Cloudflare, Slack, Zoom, GitHub, OpenAI, Claude e meios de pagamento (Mercado Pago, PagBank, Cielo e outros).
 
-Abra em **https://sidneycavalcanti.github.io/dev.html**
+Abra em **https://sidneycavalcanti.github.io** (a raiz abre o `dev.html`). No topo: ☕ Me pague um café (Buy Me a Coffee e Pix), tema claro/escuro e PT/EN.
 
 ## Como funciona
 
