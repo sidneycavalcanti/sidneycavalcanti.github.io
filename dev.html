@@ -206,6 +206,19 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   border-radius: 999px; padding: .38rem .9rem; font-weight: 600; font-size: .9rem; cursor: pointer; }
 .tvbtn:hover { background: rgb(255 255 255 / .16); }
 #relogio, #mural { display: none; }
+/* me pague um cafe: botao no topo abre a janela com Buy Me a Coffee (cartao) e Pix (copia a chave) */
+.cafe { border: 0; background: #ffdd00; color: #1a1400; border-radius: 999px; padding: .38rem .9rem; font-weight: 650; font-size: .9rem; cursor: pointer; text-decoration: none; }
+.cafe:hover { background: #f2d000; }
+html.tv #btn-cafe { display: none; }
+dialog.doar { border: 0; border-radius: 18px; padding: 1.4rem; width: min(26rem, 92vw); background: var(--surface); color: var(--ink); }
+dialog.doar::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2px); }
+dialog.doar h2 { margin: 0 0 .3rem; font-size: 1.3rem; } dialog.doar p { margin: 0 0 1rem; color: var(--muted); }
+dialog.doar .cafe { display: block; text-align: center; padding: .7rem; font-size: 1rem; }
+.pix { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; margin: .8rem 0; padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 12px; }
+.pix code { font: 600 1.05rem ui-monospace, Consolas, monospace; margin-right: auto; user-select: all; }
+.pix button { border: 1px solid var(--line); background: none; color: var(--ink); border-radius: 999px; padding: .35rem .9rem; font-weight: 600; cursor: pointer; }
+.doar-topo { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.doar-topo .close { border: 1px solid var(--line); }
 @media (min-width: 60rem) {
   /* a letra acompanha a largura E a altura da janela: com abas e barra de endereco a altura e menor que em F11 */
   html.tv { font-size: clamp(12px, min(.86vw, 1.6vh), 24px); --mt-min: 5rem; }
@@ -262,6 +275,7 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
       <a class="brand" href="https://sidneycavalcanti.com.br" data-t="marca"></a>
       <div class="tools">
         <span id="relogio"></span>
+        <button type="button" class="cafe" id="btn-cafe" data-t="cafe"></button>
         <button type="button" class="tvbtn" id="btn-tv"></button>
         <div class="seg" role="group" aria-label="Idioma / Language">
           <button type="button" data-lang="pt">PT</button>
@@ -328,6 +342,14 @@ dialog.panel::backdrop { background: rgb(10 12 28 / .5); backdrop-filter: blur(2
   <div class="panel-body" id="p-corpo"></div>
 </dialog>
 
+<dialog class="doar" id="doar" aria-labelledby="d-tit">
+  <div class="doar-topo"><h2 id="d-tit" data-t="cafe"></h2><button class="close" type="button" id="d-fechar">×</button></div>
+  <p data-t="cafeTexto"></p>
+  <a class="cafe" href="https://buymeacoffee.com/sidneycorrev" target="_blank" rel="noopener" data-t="cafeCartao"></a>
+  <div class="pix"><b>Pix</b><code id="d-chave">81984161546</code><button type="button" id="d-copiar" data-t="copiar"></button></div>
+  <p data-t="cafePix"></p>
+</dialog>
+
 <script>
 const DADOS = "https://raw.githubusercontent.com/sidneycavalcanti/sidneycavalcanti.github.io/dados/status.json";
 
@@ -359,6 +381,9 @@ const T = {
     semIncidente: "Sem incidentes abertos",
     detalhes: "Ver detalhes", fechar: "Fechar",
     painel: "Modo painel", sairPainel: "Sair do modo painel",
+    cafe: "☕ Me pague um café", cafeTexto: "Gostou do painel? Qualquer valor ajuda a manter o projeto no ar.",
+    cafeCartao: "Cartão, Apple Pay ou Google Pay", copiar: "Copiar chave", copiado: "Copiada!",
+    cafePix: "No app do banco: Pix → Pagar com chave → cole a chave (celular).",
     pagina: "Abrir a página oficial de status",
     okPainel: "Nenhum incidente aberto. O serviço está funcionando normalmente segundo a empresa.",
     erroPainel: "A página de status não respondeu. Abra a página oficial para conferir.",
@@ -398,6 +423,9 @@ const T = {
     semIncidente: "No open incidents",
     detalhes: "View details", fechar: "Close",
     painel: "Display mode", sairPainel: "Exit display mode",
+    cafe: "☕ Buy me a coffee", cafeTexto: "Like this page? Any amount helps keep the project running.",
+    cafeCartao: "Card, Apple Pay or Google Pay", copiar: "Copy key", copiado: "Copied!",
+    cafePix: "Pix (Brazil): in your bank app, Pix → Pay with key → paste the key (phone).",
     pagina: "Open the official status page",
     okPainel: "No open incidents. The provider reports the service is working normally.",
     erroPainel: "The status page did not respond. Open the official page to check.",
@@ -841,6 +869,14 @@ if (typeof document !== "undefined") {
 
   // modo painel: botao, ?painel no endereco, relogio, cursor some parado, detalhes fecham sozinhos
   $("btn-tv").addEventListener("click", () => modoPainel(!emTV(), true));
+  const doar = $("doar");
+  $("btn-cafe").addEventListener("click", () => doar.showModal());
+  $("d-fechar").addEventListener("click", () => doar.close());
+  doar.addEventListener("click", (e) => { if (e.target === doar) doar.close(); });
+  $("d-copiar").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("d-chave").textContent); $("d-copiar").textContent = T[LANG].copiado; }
+    catch { getSelection().selectAllChildren($("d-chave")); }
+  });
   if (new URLSearchParams(location.search).has("painel")) document.documentElement.classList.add("tv");
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") telaLigada(); });
   telaLigada();
